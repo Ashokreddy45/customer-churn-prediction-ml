@@ -5,7 +5,17 @@
 ![Streamlit](https://img.shields.io/badge/Streamlit-App-red)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 
+[![Live App](https://img.shields.io/badge/Live%20App-Streamlit-brightgreen)](https://customer-churn-prediction-ml-8scqsgyqsduoanpo9k6ez2.streamlit.app)
+
 An end-to-end **Machine Learning project** that predicts telecom customer churn using multiple ML models, hyperparameter tuning, and explainable AI with an interactive **Streamlit dashboard**.
+
+---
+
+# Live Demo
+
+You can try the deployed application here:
+
+https://customer-churn-prediction-ml-8scqsgyqsduoanpo9k6ez2.streamlit.app
 
 ---
 

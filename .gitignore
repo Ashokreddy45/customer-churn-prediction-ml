@@ -1,5 +1,46 @@
+# Virtual Environment
+venv/
+env/
+.venv/
+
+# Python cache
 __pycache__/
 *.pyc
-.env
+*.pyo
+*.pyd
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Dataset files
+data/*.csv
+data/*.xlsx
+data/*.json
+
+# Model files
+*.pkl
+*.joblib
+*.h5
+*.model
+
+# Logs
+*.log
+
+# MacOS
 .DS_Store
-.ipynb_checkpoints
+
+# IDE
+.vscode/
+.idea/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Python build
+build/
+dist/
+*.egg-info/
+
+# Environment variables
+.env

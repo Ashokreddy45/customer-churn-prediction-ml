@@ -15,8 +15,11 @@ from src.train_model import (
     split_data,
     train_logistic,
     train_random_forest,
+    train_gradient_boosting,
+    train_xgboost,
     evaluate_model,
-    feature_importance
+    feature_importance,
+    compare_models
 )
 
 
@@ -110,15 +113,59 @@ def main():
 
 
     # -----------------------------
-    # STEP 8: Feature Importance
+    # STEP 8: Train Gradient Boosting
+    # -----------------------------
+    print("\nTraining Gradient Boosting Model...\n")
+
+    gb_model = train_gradient_boosting(X_train, y_train)
+
+    evaluate_model(
+        gb_model,
+        X_test,
+        y_test,
+        model_name="gradient_boosting"
+    )
+
+
+    # -----------------------------
+    # STEP 9: Train XGBoost
+    # -----------------------------
+    print("\nTraining XGBoost Model...\n")
+
+    xgb_model = train_xgboost(X_train, y_train)
+
+    evaluate_model(
+        xgb_model,
+        X_test,
+        y_test,
+        model_name="xgboost"
+    )
+
+
+    # -----------------------------
+    # STEP 10: Feature Importance
     # -----------------------------
     print("\nGenerating Feature Importance Visualization...\n")
 
     feature_importance(rf_model, X_train.columns)
 
 
-    print("\nProject Execution Completed Successfully!\n")
+    # -----------------------------
+    # STEP 11: Model Comparison
+    # -----------------------------
+    print("\nComparing All Models...\n")
 
+    models = {
+        "Logistic Regression": logistic_model,
+        "Random Forest": rf_model,
+        "Gradient Boosting": gb_model,
+        "XGBoost": xgb_model
+    }
+
+    compare_models(models, X_test, y_test)
+
+
+    print("\nProject Execution Completed Successfully!\n")
 
 
 if __name__ == "__main__":

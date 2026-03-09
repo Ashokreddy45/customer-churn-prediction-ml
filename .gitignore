@@ -18,7 +18,6 @@ data/*.xlsx
 data/*.json
 
 # Model files
-*.pkl
 *.joblib
 *.h5
 *.model

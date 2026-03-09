@@ -318,7 +318,7 @@ This churn prediction system can help telecom companies:
 Machine Learning | Data Science | Artificial Intelligence
 
 GitHub:  
-https://github.com/yourusername
+https://github.com/Ashokreddy45
 
 ---
 

@@ -33,6 +33,18 @@ feature_names = pipeline["features"]
 scaler = pipeline["scaler"]
 
 # ------------------------------------------------
+# Load Dataset Safely
+# ------------------------------------------------
+
+@st.cache_data
+def load_data():
+    if os.path.exists(DATA_PATH):
+        return pd.read_csv(DATA_PATH)
+    else:
+        return None
+
+df = load_data()
+# ------------------------------------------------
 # SHAP Explainer
 # ------------------------------------------------
 
@@ -72,7 +84,9 @@ if page == "EDA Dashboard":
 
     st.header("📊 Interactive Churn Analytics Dashboard")
 
-    df = pd.read_csv(DATA_PATH)
+    if df is None:
+        st.error("Dataset not found. Please upload telco_churn.csv to the data folder.")
+        st.stop()
 
     col1, col2 = st.columns(2)
 
@@ -391,3 +405,5 @@ if page == "Predict Churn":
             )
 
         st.pyplot(fig)
+
+        

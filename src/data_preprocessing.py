@@ -1,41 +1,29 @@
 import pandas as pd
-from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import StandardScaler
 
+def load_data():
 
-def load_data(path):
-    """
-    Load dataset from CSV file
-    """
-    df = pd.read_csv(path)
-    return df
+    df = pd.read_csv("data/telco_churn.csv")
 
+    # Drop ID
+    if "customerID" in df.columns:
+        df = df.drop("customerID", axis=1)
 
-def clean_data(df):
-    """
-    Perform data cleaning
-    """
-
-    # Remove customerID because it is not useful for prediction
-    df.drop("customerID", axis=1, inplace=True)
-
-    # Convert TotalCharges column to numeric
+    # Fix TotalCharges
     df["TotalCharges"] = pd.to_numeric(df["TotalCharges"], errors="coerce")
+    df["TotalCharges"].fillna(df["TotalCharges"].median(), inplace=True)
 
-    # Fill missing values with column mean
-    df.fillna(df.mean(numeric_only=True), inplace=True)
+    # Convert target
+    df["Churn"] = df["Churn"].map({"Yes":1,"No":0})
 
-    return df
+    # One-hot encode categorical variables
+    df = pd.get_dummies(df, drop_first=True)
 
+    X = df.drop("Churn", axis=1)
+    y = df["Churn"]
 
-def encode_data(df):
-    """
-    Convert categorical columns into numeric
-    """
+    scaler = StandardScaler()
 
-    encoder = LabelEncoder()
+    X_scaled = scaler.fit_transform(X)
 
-    for column in df.columns:
-        if df[column].dtype == "object":
-            df[column] = encoder.fit_transform(df[column])
-
-    return df
+    return X_scaled, y, X.columns, scaler

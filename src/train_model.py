@@ -1,7 +1,7 @@
 import os
+import pickle
 import seaborn as sns
 import matplotlib.pyplot as plt
-import pandas as pd
 
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
@@ -11,98 +11,79 @@ from sklearn.metrics import roc_curve, roc_auc_score
 
 from xgboost import XGBClassifier
 
+from data_preprocessing import load_data
 
-# Create outputs folder
+
+# ------------------------------------------------
+# Create folders
+# ------------------------------------------------
+
 os.makedirs("outputs", exist_ok=True)
+os.makedirs("models", exist_ok=True)
 
 
-def split_data(df):
-    """
-    Split dataset into train and test
-    """
-
-    X = df.drop("Churn", axis=1)
-    y = df["Churn"]
-
-    X_train, X_test, y_train, y_test = train_test_split(
-        X,
-        y,
-        test_size=0.2,
-        random_state=42
-    )
-
-    return X_train, X_test, y_train, y_test
-
-
-# ------------------------------
+# ------------------------------------------------
 # Train Models
-# ------------------------------
+# ------------------------------------------------
 
-def train_logistic(X_train, y_train):
+def train_models(X_train, y_train):
 
-    model = LogisticRegression(max_iter=1000)
+    models = {
 
-    model.fit(X_train, y_train)
+        "LogisticRegression": LogisticRegression(max_iter=1000),
 
-    return model
+        "RandomForest": RandomForestClassifier(
+            n_estimators=200,
+            random_state=42
+        ),
 
+        "GradientBoosting": GradientBoostingClassifier(),
 
-def train_random_forest(X_train, y_train):
+        "XGBoost": XGBClassifier(
+            use_label_encoder=False,
+            eval_metric="logloss"
+        )
+    }
 
-    model = RandomForestClassifier(
-        n_estimators=200,
-        random_state=42
-    )
+    trained_models = {}
 
-    model.fit(X_train, y_train)
+    for name, model in models.items():
 
-    return model
+        print(f"\nTraining {name}...")
 
+        model.fit(X_train, y_train)
 
-def train_gradient_boosting(X_train, y_train):
+        trained_models[name] = model
 
-    model = GradientBoostingClassifier()
-
-    model.fit(X_train, y_train)
-
-    return model
-
-
-def train_xgboost(X_train, y_train):
-
-    model = XGBClassifier(
-        use_label_encoder=False,
-        eval_metric="logloss"
-    )
-
-    model.fit(X_train, y_train)
-
-    return model
+    return trained_models
 
 
-# ------------------------------
+# ------------------------------------------------
 # Evaluate Model
-# ------------------------------
+# ------------------------------------------------
 
-def evaluate_model(model, X_test, y_test, model_name="model"):
+def evaluate_model(model, X_test, y_test, model_name):
 
-    predictions = model.predict(X_test)
+    preds = model.predict(X_test)
 
-    accuracy = accuracy_score(y_test, predictions)
+    accuracy = accuracy_score(y_test, preds)
 
-    print("\n==========================")
+    print("\n==============================")
     print(model_name)
-    print("==========================")
+    print("==============================")
 
     print("Accuracy:", accuracy)
 
     print("\nClassification Report\n")
 
-    print(classification_report(y_test, predictions))
+    print(classification_report(y_test, preds))
 
 
+    # ----------------------------
     # Confusion Matrix
-    cm = confusion_matrix(y_test, predictions)
+    # ----------------------------
+
+    cm = confusion_matrix(y_test, preds)
 
     plt.figure(figsize=(6,4))
 
@@ -115,10 +96,12 @@ def evaluate_model(model, X_test, y_test, model_name="model"):
 
     plt.savefig(f"outputs/{model_name}_confusion_matrix.png")
 
-    plt.show()
+    plt.close()
 
 
+    # ----------------------------
     # ROC Curve
+    # ----------------------------
 
     if hasattr(model, "predict_proba"):
 
@@ -135,7 +118,6 @@ def evaluate_model(model, X_test, y_test, model_name="model"):
         plt.plot([0,1],[0,1],'--')
 
         plt.xlabel("False Positive Rate")
-
         plt.ylabel("True Positive Rate")
 
         plt.title(f"{model_name} ROC Curve")
@@ -144,57 +126,92 @@ def evaluate_model(model, X_test, y_test, model_name="model"):
 
         plt.savefig(f"outputs/{model_name}_roc_curve.png")
 
-        plt.show()
+        plt.close()
+
+    return accuracy
 
 
-# ------------------------------
-# Feature Importance
-# ------------------------------
+# ------------------------------------------------
+# Main Pipeline
+# ------------------------------------------------
 
-def feature_importance(model, feature_names):
+def main():
 
-    if hasattr(model, "feature_importances_"):
+    print("\nLoading dataset...")
 
-        importance = model.feature_importances_
+    X, y, feature_names, scaler = load_data()
 
-        feature_series = pd.Series(
-            importance,
-            index=feature_names
-        )
-
-        top_features = feature_series.nlargest(10)
-
-        plt.figure(figsize=(8,6))
-
-        top_features.plot(kind="barh")
-
-        plt.title("Top 10 Important Features")
-
-        plt.xlabel("Importance Score")
-
-        plt.savefig("outputs/feature_importance.png")
-
-        plt.show()
+    print("Dataset shape:", X.shape)
 
 
-# ------------------------------
-# Model Comparison
-# ------------------------------
+    # ----------------------------
+    # Train Test Split
+    # ----------------------------
 
-def compare_models(models, X_test, y_test):
+    X_train, X_test, y_train, y_test = train_test_split(
+        X,
+        y,
+        test_size=0.2,
+        random_state=42
+    )
+
+
+    print("\nTraining models...")
+
+    models = train_models(X_train, y_train)
+
+
+    print("\nEvaluating models...")
 
     results = {}
 
     for name, model in models.items():
 
-        preds = model.predict(X_test)
-
-        acc = accuracy_score(y_test, preds)
+        acc = evaluate_model(model, X_test, y_test, name)
 
         results[name] = acc
 
-    print("\nMODEL COMPARISON")
+
+    # ----------------------------
+    # Model Comparison
+    # ----------------------------
+
+    print("\nModel Comparison")
 
     for name, score in results.items():
 
         print(f"{name}: {score:.3f}")
+
+
+    # ----------------------------
+    # Select Best Model
+    # ----------------------------
+
+    best_model_name = "XGBoost"
+    best_model = models[best_model_name]
+
+    print(f"\nBest Model: {best_model_name}")
+
+
+    # ----------------------------
+    # Save Model Pipeline
+    # ----------------------------
+
+    pipeline = {
+        "model": best_model,
+        "features": feature_names,
+        "scaler": scaler
+    }
+
+    model_path = "models/churn_model.pkl"
+
+    with open(model_path, "wb") as f:
+        pickle.dump(pipeline, f)
+
+    print(f"\nModel saved to {model_path}")
+
+
+# ------------------------------------------------
+
+if __name__ == "__main__":
+    main()
